@@ -126,7 +126,7 @@
       <img class="media" src="${IMG_BEFORE}" alt="Cute image" />
       <div class="content">
         <h1>Will you be my Valentine? ❤️</h1>
-        <p class="countdown">Countdown to Valentine’s Day: <b id="countdown"></b></p>
+        <p class="countdown">Countdown to Valentine’s Day(Say yes before this time Ann):<b id="countdown"></b></p>
 
         <div class="buttons">
           <button id="yes">Yes</button>
@@ -165,25 +165,32 @@
   }
 
   function renderYesScreen() {
-    const app = document.getElementById("app");
-    app.innerHTML = `
-      <img class="media" src="${IMG_AFTER}" alt="Happy image" />
-      <div class="content">
-        <h1>Yay!! 💖</h1>
-        <p>It’s a date. 😌</p>
-        <p class="countdown">Countdown to Valentine’s Day: <b id="countdown"></b></p>
-        <button class="reset" id="reset">Reset (only for you)</button>
-        <div class="tiny">Status saved on this device</div>
-      </div>
-    `;
+  const app = document.getElementById("app");
 
+  const isAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
+
+  app.innerHTML = `
+    <img class="media" src="${IMG_AFTER}" alt="Happy image" />
+    <div class="content">
+      <h1>Yay!! 💖</h1>
+      <p>It’s a date. 😌</p>
+      <p class="countdown">Countdown to Valentine’s Day(Say yes before this time Ann): <b id="countdown"></b></p>
+
+      ${isAdmin ? `<button class="reset" id="reset">Reset (only for you)</button>` : ``}
+
+      <div class="tiny">Status saved on this device</div>
+    </div>
+  `;
+
+  if (isAdmin) {
     document.getElementById("reset").addEventListener("click", () => {
       localStorage.removeItem(STORAGE_KEY);
       renderQuestionScreen();
     });
-
-    startCountdown();
   }
+
+  startCountdown();
+}
 
   let countdownTimer = null;
 
