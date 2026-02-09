@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Bachelor Proposal Evaluation v1.2</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #ffdee9, #b5fffc);
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: min(560px, 94vw);
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .media {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .content {
+      padding: 26px 26px 30px;
+    }
+
+    h1 { margin: 0 0 14px; }
+    p { margin: 10px 0; }
+
+    .countdown {
+      font-size: 16px;
+      opacity: 0.9;
+      margin-top: 10px;
+    }
+
+    .buttons {
+  position: relative;
+  height: 120px;
+  margin-top: 20px;
+}
+
+#yes {
+  background: #ff4d6d;
+  color: white;
+  position: absolute;
+  left: 80px;
+  top: 30px;
+}
+
+#no {
+  background: #d9d9d9;
+  color: #111;
+  position: absolute;
+  left: 260px; /* lengre vekk fra Yes */
+  top: 30px;
+  pointer-events: none;
+}
+
+    .tiny {
+      font-size: 12px;
+      opacity: 0.55;
+      margin-top: 14px;
+    }
+
+    .reset {
+      margin-top: 14px;
+      font-size: 13px;
+      background: transparent;
+      border: 1px solid rgba(0,0,0,0.15);
+      color: rgba(0,0,0,0.65);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card" id="app"></div>
+
+<script>
+  // --- CONFIG: put your image filenames here (same folder as index.html) ---
+  const IMG_BEFORE = "before.jpg";
+  const IMG_AFTER  = "after.jpg";
+
+  // Key for remembering "Yes"
+  const STORAGE_KEY = "valentineAccepted_v1";
+
+  function nextValentinesDate() {
+    // Returns the next Feb 14 (local time) at 00:00:00
+    const now = new Date();
+    const year = now.getFullYear();
+    let target = new Date(year, 1, 14, 0, 0, 0); // month: 1 = Feb
+    if (now > target) target = new Date(year + 1, 1, 14, 0, 0, 0);
+    return target;
+  }
+
+  function formatCountdown(ms) {
+    if (ms <= 0) return "It’s Valentine’s Day! ❤️";
+
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / (3600 * 24));
+    const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+  }
+
+  function renderQuestionScreen() {
+    const app = document.getElementById("app");
+    app.innerHTML = `
+      <img class="media" src="${IMG_BEFORE}" alt="Cute image" />
+      <div class="content">
+        <h1>Will you be my Valentine? ❤️</h1>
+        <p class="countdown">Countdown to Valentine’s Day: <b id="countdown"></b></p>
+
+        <div class="buttons">
+          <button id="yes">Yes</button>
+          <button id="no">No</button>
+        </div>
+
+        <div class="tiny">Bachelor Proposal Draft • Positives & Negatives</div>
+      </div>
+    `;
+
+    const noBtn = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+
+    let yesSize = 18;
+
+    function dodgeNo() {
+  const x = Math.random() * 80 - 40; // små bevegelser
+  const y = Math.random() * 40 - 20;
+
+  noBtn.style.transform = `translate(${x}px, ${y}px)`;
+
+  yesSize += 3;
+  yesBtn.style.fontSize = yesSize + "px";
+  yesBtn.style.padding = (12 + yesSize / 5) + "px";
+}
+
+    noBtn.addEventListener("mouseover", dodgeNo);
+    noBtn.addEventListener("click", dodgeNo);
+
+    yesBtn.addEventListener("click", () => {
+      localStorage.setItem(STORAGE_KEY, "true");
+      renderYesScreen();
+    });
+
+    startCountdown();
+  }
+
+  function renderYesScreen() {
+    const app = document.getElementById("app");
+    app.innerHTML = `
+      <img class="media" src="${IMG_AFTER}" alt="Happy image" />
+      <div class="content">
+        <h1>Yay!! 💖</h1>
+        <p>It’s a date. 😌</p>
+        <p class="countdown">Countdown to Valentine’s Day: <b id="countdown"></b></p>
+        <button class="reset" id="reset">Reset (only for you)</button>
+        <div class="tiny">Status saved on this device</div>
+      </div>
+    `;
+
+    document.getElementById("reset").addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEY);
+      renderQuestionScreen();
+    });
+
+    startCountdown();
+  }
+
+  let countdownTimer = null;
+
+  function startCountdown() {
+    if (countdownTimer) clearInterval(countdownTimer);
+
+    const target = nextValentinesDate();
+    const el = document.getElementById("countdown");
+
+    const tick = () => {
+      const now = new Date();
+      const ms = target - now;
+      if (el) el.textContent = formatCountdown(ms);
+    };
+
+    tick();
+    countdownTimer = setInterval(tick, 1000);
+  }
+
+  // --- On load: decide which screen to show ---
+  const accepted = localStorage.getItem(STORAGE_KEY) === "true";
+  if (accepted) renderYesScreen();
+  else renderQuestionScreen();
+</script>
+
+</body>
+</html>
